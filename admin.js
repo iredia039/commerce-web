@@ -267,7 +267,7 @@ productForm.addEventListener('submit', async e => {
     price: Number(fd.get('price')),
     stock: Number(fd.get('stock')),
     discountPercentage: Number(fd.get('discountPercentage')) || 0,
-    thumbnail: fd.get('thumbnail').trim() || 'https://cdn.dummyjson.com/products/images/furniture/Bed%20Frame/thumbnail.png',
+    thumbnail: fd.get('thumbnail').trim() || 'https://dummyjson.com/image/400x400/e2e8f0/1a1a1a?text=No+Image',
     description: fd.get('description').trim(),
   };
   closeFormModal();
@@ -432,14 +432,21 @@ async function handleDelete(product) {
   const id = product.id;
   const key = String(id);
   const isLocalAdd = Object.prototype.hasOwnProperty.call(shadow.added, id);
-  let snapshotAdded = null;
 
+  // Locally-added products were never actually persisted by DummyJSON's fake
+  // POST /products/add (it always echoes id 195 regardless of input), so
+  // there's nothing real to delete server-side — just drop it from shadow state.
   if (isLocalAdd) {
-    snapshotAdded = { ...shadow.added[id] };
     delete shadow.added[id];
-  } else {
-    shadow.deleted.push(id);
+    Shadow.save(shadow);
+    const logId = addLog({ method: 'DELETE', endpoint: `/products/${id}`, detail: `Removing locally-added "${product.title}"` });
+    settleLog(logId, 'success', `Deleted "${product.title}" — was local-only, never sent to the server`);
+    toast(`Deleted "${product.title}"`, 'success');
+    loadAdminPage(adminState.page);
+    return;
   }
+
+  shadow.deleted.push(id);
   Shadow.save(shadow);
   pendingIds.add(key);
   loadAdminPage(adminState.page);
@@ -453,8 +460,7 @@ async function handleDelete(product) {
     settleLog(logId, 'success', `Deleted "${product.title}"`);
     toast(`Deleted "${product.title}"`, 'success');
   } catch (err) {
-    if (isLocalAdd) shadow.added[id] = snapshotAdded;
-    else shadow.deleted = shadow.deleted.filter(d => d !== id);
+    shadow.deleted = shadow.deleted.filter(d => d !== id);
     Shadow.save(shadow);
     pendingIds.delete(key);
     settleLog(logId, 'failed', `Rolled back — ${err.message}`);
