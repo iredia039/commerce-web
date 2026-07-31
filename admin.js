@@ -141,10 +141,10 @@ function rowTemplate(p) {
     <tr class="${cls}" data-row="${p.id}">
       <td><img class="row-thumb" src="${p.thumbnail || ''}" alt=""></td>
       <td><span class="row-title">${escapeHtml(p.title)}</span>${flag}</td>
-      <td>${escapeHtml(p.category)}</td>
+      <td class="hidden sm:table-cell">${escapeHtml(p.category)}</td>
       <td>${money(p.price)}</td>
       <td>${p.stock}</td>
-      <td>
+      <td class="sticky right-0 z-10 bg-[var(--paper-card)] shadow-[-8px_0_8px_-8px_rgba(33,32,28,0.25)]">
         <div class="row-actions">
           <button class="btn small line" data-action="quick" data-id="${p.id}" ${disabled}>Quick edit</button>
           <button class="btn small line" data-action="full" data-id="${p.id}" ${disabled}>Full edit</button>
