@@ -1,74 +1,148 @@
-// ============================================================
-// api.js
-// Every call to dummyjson.com lives in this file. Keeping all
-// fetch() calls in one place means store.js and admin.js never
-// have to think about URLs or response.json() — they just call
-// these functions and get plain data back.
-//
-// Pattern to follow for each function below:
-//   async function name(args) {
-//     try {
-//       const res = await fetch(url);
-//       if (!res.ok) throw new Error(`Request failed: ${res.status}`);
-//       const data = await res.json();
-//       return data;
-//     } catch (err) {
-//       console.error(err);
-//       throw err; // let the caller decide how to show this to the user
-//     }
-//   }
-// ============================================================
+/* ==========================================================================
+   STOCKROOM — shared API + utilities
+   ========================================================================== */
 
-const API_BASE = "https://dummyjson.com/products";
+const API_BASE = 'https://dummyjson.com';
+const PAGE_SIZE = 10;
 
-// ---------- GET (store side) ----------
+const Api = {
+  async getProducts({ limit = PAGE_SIZE, skip = 0 } = {}) {
+    const res = await fetch(`${API_BASE}/products?limit=${limit}&skip=${skip}`);
+    if (!res.ok) throw new Error(`GET /products failed (${res.status})`);
+    return res.json();
+  },
 
-// Fetch one page of products.
-// limit/skip map directly to state.store.pageSize and (page-1)*pageSize.
-async function getProducts(limit, skip) {
-  // TODO: fetch `${API_BASE}?limit=${limit}&skip=${skip}`
-  // returns { products, total, skip, limit }
+  async getCategories() {
+    const res = await fetch(`${API_BASE}/products/categories`);
+    if (!res.ok) throw new Error(`GET /products/categories failed (${res.status})`);
+    const data = await res.json();
+    // API may return array of strings or array of {slug,name,url} objects.
+    return data.map(c => (typeof c === 'string' ? { slug: c, name: titleCase(c) } : c));
+  },
+
+  async getByCategory(slug, { limit = PAGE_SIZE, skip = 0 } = {}) {
+    const res = await fetch(`${API_BASE}/products/category/${encodeURIComponent(slug)}?limit=${limit}&skip=${skip}`);
+    if (!res.ok) throw new Error(`GET /products/category/${slug} failed (${res.status})`);
+    return res.json();
+  },
+
+  async search(q, { limit = PAGE_SIZE, skip = 0 } = {}) {
+    const res = await fetch(`${API_BASE}/products/search?q=${encodeURIComponent(q)}&limit=${limit}&skip=${skip}`);
+    if (!res.ok) throw new Error(`GET /products/search failed (${res.status})`);
+    return res.json();
+  },
+
+  async getOne(id) {
+    const res = await fetch(`${API_BASE}/products/${id}`);
+    if (!res.ok) throw new Error(`GET /products/${id} failed (${res.status})`);
+    return res.json();
+  },
+
+  async addProduct(body) {
+    const res = await fetch(`${API_BASE}/products/add`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`POST /products/add failed (${res.status})`);
+    return res.json();
+  },
+
+  async replaceProduct(id, body) {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`PUT /products/${id} failed (${res.status})`);
+    return res.json();
+  },
+
+  async patchProduct(id, body) {
+    const res = await fetch(`${API_BASE}/products/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) throw new Error(`PATCH /products/${id} failed (${res.status})`);
+    return res.json();
+  },
+
+  async deleteProduct(id) {
+    const res = await fetch(`${API_BASE}/products/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`DELETE /products/${id} failed (${res.status})`);
+    return res.json();
+  },
+};
+
+function titleCase(slug) {
+  return slug.replace(/[-_]/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
-// Fetch the list of category names for the filter dropdown.
-async function getCategories() {
-  // TODO: fetch `${API_BASE}/categories`
+function money(n) {
+  return `$${Number(n).toFixed(2)}`;
 }
 
-// Fetch one page of products within a single category.
-async function getProductsByCategory(categoryName, limit, skip) {
-  // TODO: fetch `${API_BASE}/category/${categoryName}?limit=${limit}&skip=${skip}`
+function escapeHtml(str = '') {
+  return String(str)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 }
 
-// Fetch one page of search results.
-async function searchProducts(query, limit, skip) {
-  // TODO: fetch `${API_BASE}/search?q=${encodeURIComponent(query)}&limit=${limit}&skip=${skip}`
+function timeStamp() {
+  const d = new Date();
+  return d.toTimeString().slice(0, 8);
 }
 
-// Fetch a single product's full detail.
-async function getProductById(id) {
-  // TODO: fetch `${API_BASE}/${id}`
+function toast(message, kind = 'success', ms = 4200) {
+  const stack = document.getElementById('toast-stack');
+  if (!stack) return;
+  const el = document.createElement('div');
+  el.className = 'toast' + (kind === 'failed' ? ' failed' : '');
+  el.textContent = message;
+  stack.appendChild(el);
+  setTimeout(() => {
+    el.style.transition = 'opacity .2s';
+    el.style.opacity = '0';
+    setTimeout(() => el.remove(), 200);
+  }, ms);
 }
 
-// ---------- WRITE (admin side) ----------
-// Reminder: dummyjson *accepts* these requests and echoes back a
-// fake success response, but never actually stores anything.
-// admin.js is responsible for updating state.admin.shadowProducts
-// after each of these resolves — that's the "real" data source.
+/* ---------------- shadow state (admin only) ----------------
+   Persisted in localStorage since DummyJSON writes never persist
+   server-side. Structure:
+   { added: { [tempOrRealId]: product }, edited: { [id]: partialFields }, deleted: [id,...] }
+------------------------------------------------------------- */
+const SHADOW_KEY = 'stockroom_admin_shadow_v1';
+const LOG_KEY = 'stockroom_admin_log_v1';
 
-async function addProduct(productData) {
-  // TODO: POST `${API_BASE}/add`
-  // headers: { "Content-Type": "application/json" }, body: JSON.stringify(productData)
-}
-
-async function updateProductFull(id, productData) {
-  // TODO: PUT `${API_BASE}/${id}` — full replace
-}
-
-async function updateProductPartial(id, partialData) {
-  // TODO: PATCH `${API_BASE}/${id}` — quick edit (e.g. just price or stock)
-}
-
-async function deleteProduct(id) {
-  // TODO: DELETE `${API_BASE}/${id}`
-}
+const Shadow = {
+  load() {
+    try {
+      const raw = localStorage.getItem(SHADOW_KEY);
+      if (!raw) return { added: {}, edited: {}, deleted: [] };
+      const parsed = JSON.parse(raw);
+      return {
+        added: parsed.added || {},
+        edited: parsed.edited || {},
+        deleted: parsed.deleted || [],
+      };
+    } catch {
+      return { added: {}, edited: {}, deleted: [] };
+    }
+  },
+  save(state) {
+    localStorage.setItem(SHADOW_KEY, JSON.stringify(state));
+  },
+  loadLog() {
+    try {
+      const raw = localStorage.getItem(LOG_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  },
+  saveLog(log) {
+    localStorage.setItem(LOG_KEY, JSON.stringify(log.slice(-300)));
+  },
+};

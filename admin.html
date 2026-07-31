@@ -1,0 +1,165 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Stockroom Manifest</title>
+<link rel="stylesheet" href="styles.css">
+<!-- <script src="https://cdn.tailwindcss.com"></script> -->
+ <link rel="stylesheet" href="public/output.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="wrap topbar-inner">
+    <a href="index.html" class="brand">STOCKROOM <small>manifest v1</small></a>
+    <nav class="topbar-nav">
+      <a class="nav-link" href="index.html">Shop</a>
+      <a class="nav-link is-active" href="admin.html">Admin dashboard</a>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <p class="eyebrow">Write operations · POST · PUT · PATCH · DELETE</p>
+  <h1 class="page-title">Admin dashboard</h1>
+  <p class="page-sub">DummyJSON simulates writes but never persists them, so every change here is tracked in a local shadow state (saved to this browser) and layered back over live GET data. Every request is recorded in the log on the right.</p>
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <button class="btn" id="btn-add">+ Add product</button>
+      <div class="search-box" style="max-width:240px">
+        <span class="ic">⌕</span>
+        <input id="admin-search" type="search" placeholder="Search…" aria-label="Search products">
+      </div>
+      <select id="admin-category" aria-label="Filter by category">
+        <option value="">All categories</option>
+      </select>
+    </div>
+    <label class="flaky-toggle" id="flaky-toggle">
+      <input type="checkbox" id="flaky-checkbox">
+      Simulate flaky network (35% fail)
+    </label>
+  </div>
+
+  <div class="admin-shell">
+    <section class="panel">
+      <div class="panel-head">
+        <h2>Products</h2>
+        <span class="count" id="admin-count">—</span>
+      </div>
+      <div style="overflow-x:auto">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th></th><th>Product</th><th>Category</th><th>Price</th><th>Stock</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="admin-tbody">
+            <tr><td colspan="6" class="empty-row">Loading…</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <nav id="admin-pager" class="pager" style="padding:16px"></nav>
+    </section>
+
+    <aside class="panel log-panel">
+      <div class="panel-head">
+        <h2>Activity log</h2>
+        <span class="count" id="log-count">0 events</span>
+      </div>
+      <ul id="log-list" class="log-list">
+        <li class="log-empty">No admin actions yet. Add, edit, or delete a product to see it logged here.</li>
+      </ul>
+    </aside>
+  </div>
+</main>
+
+<!-- add / full-edit modal -->
+<div id="form-overlay" class="modal-overlay">
+  <div class="modal" style="max-width:640px" role="dialog" aria-modal="true" aria-labelledby="form-modal-title">
+    <button class="modal-close" id="form-close" aria-label="Close">✕</button>
+    <form id="product-form">
+      <div class="modal-title-row">
+        <p class="eyebrow" id="form-eyebrow">POST /products/add</p>
+        <h2 id="form-modal-title">Add product</h2>
+      </div>
+      <div class="form-grid">
+        <div class="field full">
+          <label for="f-title">Title</label>
+          <input id="f-title" name="title" required maxlength="120">
+        </div>
+        <div class="field">
+          <label for="f-category">Category</label>
+          <select id="f-category" name="category" required></select>
+        </div>
+        <div class="field">
+          <label for="f-brand">Brand</label>
+          <input id="f-brand" name="brand" maxlength="60">
+        </div>
+        <div class="field">
+          <label for="f-price">Price (USD)</label>
+          <input id="f-price" name="price" type="number" min="0" step="0.01" required>
+        </div>
+        <div class="field">
+          <label for="f-stock">Stock</label>
+          <input id="f-stock" name="stock" type="number" min="0" step="1" required>
+        </div>
+        <div class="field">
+          <label for="f-discount">Discount %</label>
+          <input id="f-discount" name="discountPercentage" type="number" min="0" max="90" step="0.1" value="0">
+        </div>
+        <div class="field">
+          <label for="f-thumbnail">Thumbnail URL</label>
+          <input id="f-thumbnail" name="thumbnail" type="url" placeholder="https://…">
+        </div>
+        <div class="field full">
+          <label for="f-description">Description</label>
+          <textarea id="f-description" name="description" maxlength="500"></textarea>
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn ghost" id="form-cancel">Cancel</button>
+        <button type="submit" class="btn" id="form-submit">Save product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- quick edit modal -->
+<div id="quick-overlay" class="modal-overlay">
+  <div class="modal" style="max-width:440px" role="dialog" aria-modal="true" aria-labelledby="quick-modal-title">
+    <button class="modal-close" id="quick-close" aria-label="Close">✕</button>
+    <form id="quick-form">
+      <div class="modal-title-row">
+        <p class="eyebrow">PATCH /products/{id}</p>
+        <h2 id="quick-modal-title">Quick edit</h2>
+      </div>
+      <div class="form-grid quick">
+        <div class="field">
+          <label for="q-price">Price (USD)</label>
+          <input id="q-price" name="price" type="number" min="0" step="0.01" required>
+        </div>
+        <div class="field">
+          <label for="q-stock">Stock</label>
+          <input id="q-stock" name="stock" type="number" min="0" step="1" required>
+        </div>
+        <div class="field full">
+          <label for="q-discount">Discount %</label>
+          <input id="q-discount" name="discountPercentage" type="number" min="0" max="90" step="0.1">
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="btn ghost" id="quick-cancel">Cancel</button>
+        <button type="submit" class="btn">Apply</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="toast-stack" id="toast-stack"></div>
+
+<script src="api.js"></script>
+<script src="admin.js"></script>
+</body>
+</html>
