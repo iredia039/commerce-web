@@ -118,7 +118,7 @@ function renderMeta(data, endpointLabel) {
   const to = Math.min(data.skip + data.limit, data.total);
   resultMeta.innerHTML = `
     <span>${from}–${to} of ${data.total} products</span>
-    <span class="stamp visible" style="position:static;transform:none;opacity:1;">${escapeHtml(endpointLabel)}</span>
+    <span class="stamp visible !whitespace-normal !break-words !min-w-0 !max-w-full" style="position:static;transform:none;opacity:1;">${escapeHtml(endpointLabel)}</span>
   `;
 }
 
