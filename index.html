@@ -95,33 +95,33 @@
   .btn-cart-lg { padding: 10px 22px; }
 </style>
 </head>
-<body>
+<body class="min-h-screen bg-slate-50 text-slate-900">
 
-<header class="topbar">
-  <div class="wrap topbar-inner">
+<header class="topbar border-b border-slate-200 bg-white/95 backdrop-blur">
+  <div class="wrap topbar-inner mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
     <a href="index.html" class="brand">STOCKROOM <small>manifest v1</small></a>
-    <nav class="topbar-nav">
+    <nav class="topbar-nav flex flex-wrap items-center gap-2 sm:gap-3">
       <a class="nav-link is-active" href="index.html">Shop</a>
       <a class="nav-link" href="admin.html">Admin dashboard →</a>
     </nav>
-    <button class="cart-btn" id="cart-btn" aria-label="Open cart">
+    <button class="cart-btn ml-0 w-full sm:ml-3 sm:w-auto" id="cart-btn" aria-label="Open cart">
       <span aria-hidden="true">🛒</span> Cart
       <span class="cart-badge is-empty" id="cart-badge">0</span>
     </button>
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
   <p class="eyebrow">Read-only catalog · GET requests only</p>
   <h1 class="page-title">Browse the manifest</h1>
   <p class="page-sub">Every card, filter and page here is one GET call to dummyjson.com/products — nothing here writes anything.</p>
 
-  <div class="controls">
-    <form id="search-form" class="search-box" role="search">
+  <div class="controls flex flex-col gap-3 lg:flex-row lg:items-end">
+    <form id="search-form" class="search-box w-full lg:max-w-xl" role="search">
       <span class="ic">⌕</span>
       <input id="search-input" type="search" placeholder="Search products… (e.g. phone, chair, lipstick)" aria-label="Search products">
     </form>
-    <div id="chips" class="chips" aria-label="Filter by category">
+    <div id="chips" class="chips flex flex-wrap gap-2" aria-label="Filter by category">
       <button class="chip is-active" data-slug="">All categories</button>
     </div>
   </div>
@@ -133,7 +133,7 @@
   <nav id="pager" class="pager" aria-label="Pagination"></nav>
 </main>
 
-<footer class="site-foot wrap">
+<footer class="site-foot wrap mx-auto max-w-7xl px-4 py-6 text-sm text-slate-600 sm:px-6 lg:px-8">
   <span>STOCKROOM demo · data via dummyjson.com/products</span>
   <span>GET /products · GET /products/categories · GET /products/category/{name} · GET /products/search · GET /products/{id}</span>
 </footer>

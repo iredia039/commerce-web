@@ -8,41 +8,41 @@
 <!-- <script src="https://cdn.tailwindcss.com"></script> -->
  <link rel="stylesheet" href="public/output.css">
 </head>
-<body>
+<body class="min-h-screen bg-slate-50 text-slate-900">
 
-<header class="topbar">
-  <div class="wrap topbar-inner">
+<header class="topbar border-b border-slate-200 bg-white/95 backdrop-blur">
+  <div class="wrap topbar-inner mx-auto flex max-w-7xl flex-col gap-3 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
     <a href="index.html" class="brand">STOCKROOM <small>manifest v1</small></a>
-    <nav class="topbar-nav">
+    <nav class="topbar-nav flex flex-wrap items-center gap-2 sm:gap-3">
       <a class="nav-link" href="index.html">Shop</a>
       <a class="nav-link is-active" href="admin.html">Admin dashboard</a>
     </nav>
   </div>
 </header>
 
-<main class="wrap">
+<main class="wrap mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
   <p class="eyebrow">Write operations · POST · PUT · PATCH · DELETE</p>
   <h1 class="page-title">Admin dashboard</h1>
   <p class="page-sub">DummyJSON simulates writes but never persists them, so every change here is tracked in a local shadow state (saved to this browser) and layered back over live GET data. Every request is recorded in the log on the right.</p>
 
-  <div class="toolbar">
-    <div class="toolbar-left">
-      <button class="btn" id="btn-add">+ Add product</button>
-      <div class="search-box" style="max-width:240px">
+  <div class="toolbar flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+    <div class="toolbar-left flex flex-col gap-3 md:flex-row md:items-center">
+      <button class="btn w-full md:w-auto" id="btn-add">+ Add product</button>
+      <div class="search-box w-full md:w-64">
         <span class="ic">⌕</span>
         <input id="admin-search" type="search" placeholder="Search…" aria-label="Search products">
       </div>
-      <select id="admin-category" aria-label="Filter by category">
+      <select class="w-full md:w-48" id="admin-category" aria-label="Filter by category">
         <option value="">All categories</option>
       </select>
     </div>
-    <label class="flaky-toggle" id="flaky-toggle">
+    <label class="flaky-toggle flex items-center gap-2 text-sm" id="flaky-toggle">
       <input type="checkbox" id="flaky-checkbox">
       Simulate flaky network (35% fail)
     </label>
   </div>
 
-  <div class="admin-shell">
+  <div class="admin-shell grid gap-6 xl:grid-cols-[1.6fr_0.9fr]">
     <section class="panel">
       <div class="panel-head">
         <h2>Products</h2>
